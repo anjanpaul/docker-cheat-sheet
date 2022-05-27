@@ -1,7 +1,7 @@
 # docker-cheat-sheet
 
 
-## Downloading PDF/Epub formats
+
 
 
 ### Table of Contents
