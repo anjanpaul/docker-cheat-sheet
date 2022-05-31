@@ -172,6 +172,9 @@ docker exec [OPTIONS] CONTAINER COMMAND [ARG...]
 
 Example:
 docker exec -it golang sh // Or use bash command if sh is failed
+
+Use Port Mapping
+docker run -d -p 81:80 --name mynginx nginx
 ```
 
 #### Update
@@ -611,6 +614,122 @@ VOLUME /test
 
 ### Docker Compose
    Docker compose(or compose) is a tool for defining and running multi-container Docker applications.
+   Dockerfile For Backend
+```
+
+FROM python:3.7.1
+
+RUN mkdir /app
+WORKDIR /app
+
+RUN apt-get update -y 
+RUN apt-get install -y python-pip python-dev
+
+COPY ./requirements.txt /app/requirements.txt
+
+RUN pip install -r requirements.txt
+
+ADD . /app
+
+EXPOSE 5000
+
+CMD flask run --host=0.0.0.0
+
+
+```
+
+App.py
+
+```
+from flask import Flask,jsonify,request
+app = Flask(__name__)
+
+@app.route('/')
+def hello_world():
+    return 'Hello world'
+
+
+@app.route('/reverser',methods = ['POST'])
+def reverser():
+    num = request.get_json().get("num")
+    num = int(num[len(num)::-1])
+    return jsonify({"num":num})
+
+
+@app.route('/summation',methods = ['POST'])
+def summation():
+    num = request.get_json().get("num")
+    sum = 0
+    for i in num:
+        sum += int(i)
+
+    return jsonify({"sum":sum})
+
+if __name__ == "__main__":
+     app.run()
+
+
+
+```
+Requirements.txt
+
+```
+flask
+
+```
+
+Dockerfile for frontend
+
+```
+FROM node:11.10.0-alpine AS build-stage
+
+RUN apk add --update --no-cache \
+    python \
+    make \
+    g++
+
+COPY . /src
+WORKDIR /src
+COPY ./package* ./
+RUN npm install
+RUN yarn build
+
+FROM nginx:latest
+RUN rm -rf /usr/share/nginx/html
+RUN mkdir /usr/share/nginx/html
+COPY --from=build-stage /src/build/ /usr/share/nginx/html/
+COPY default.conf /etc/nginx/conf.d/
+
+EXPOSE 80
+
+
+```
+
+
+```
+
+version: '3'
+services:
+  frontend:
+    image: frontend:0.0.1
+    ports:
+      - "80:80"
+    depends_on:
+      - "backend"
+  backend:
+    image: backend:0.0.1
+    ports:
+    - "5000:5000"
+
+
+   ```
+
+   For Build and run
+   ```
+
+   Docker-compose up --build
+   
+   ```
 ### Docker Swarm
    Docker Swarm(or swarm) is an open-source tool used to cluster and orchestrate Docker containers.
 
